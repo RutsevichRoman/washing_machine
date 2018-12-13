@@ -35,11 +35,11 @@ To test REST API was chosen Advanced REST Client.
 Parameters states can be checked by executing corresponded GET requests.
 
 Parameters states can be changed by executing corresponded POST requests.
-##Settings for POST request:
+## Settings for POST request:
 - body content type - application/json;
 - editor view - Raw input.
 
-###Example of using requests for power:
+### Example of using requests for power:
 - GET request "/power/state" the message "Power is off" will be shown;
 - POST request "/power" (Body content type - application/json; Editor view - Raw input) with body "true" (must be set 
 without quotes in REST client) the message "Power is on" will be shown with OK response;
@@ -48,7 +48,7 @@ due to it's already set to "true" and vise-versa,
 if current state of power is "false" and send POST request "/power" with body "false" (must be set without quotes in 
 REST client) the message "Power can not be switched off" with BAD response due to it's already switched off.
 
-###Example of using requests for door:
+### Example of using requests for door:
 - GET request "/door/state" the message "Washing machine door is closed" will be shown;
 - POST request "/door" with with body "true" the message "Washing machine door is open" will be shown with OK response 
 due to door was closed;
@@ -57,7 +57,7 @@ BAD response due to door was opened by previous POST request;
 - vise-versa by sending in arrow two POST request "/door" with body "false" the message "Can not close the door" will 
 be shown due to there is second attempt to close the door.
 
-###Example of using requests for washing machine mode:
+### Example of using requests for washing machine mode:
 - GET request "/mode/current". The message INITIAL will be shown due to it's default mode with OK response;
 - POST "/mode" with body INITIAL. The message "Mode INITIAL can not be set" with BAD response due to it was previous 
 mode of washing machine;
@@ -65,10 +65,10 @@ mode of washing machine;
 "/mode" with body COTTON_30 the message "Mode COTTON_30 can not be set" with BAD request due to this mode was set 
 in a previous step.
 
-###Every mode has state READY by default:
+### Every mode has state READY by default:
 - GET request "/mode/state". The message READY will be shown with OK response.
 
-###Running washing machine:
+### Running washing machine:
 - POST request "/run". The message "Mode COTTON_30 is run" will be shown in case of mode COTTON_30 with OK response.
 Logging mode states executes in IDE console: READY, LOAD_WASHING_CAPSULE, LOAD_WATER, WASHING, 
 UNLOAD_WATER, PRESSING, FINISHED. When mode executed it has state READY to repeat the washing mode;
