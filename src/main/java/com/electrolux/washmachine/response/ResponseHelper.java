@@ -1,31 +1,33 @@
 package com.electrolux.washmachine.response;
 
+import com.electrolux.washmachine.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ResponseHelper {
 
+    private final Localization localization;
+
     @Autowired
-    public ResponseHelper() {
-
+    public ResponseHelper(Localization localization) {
+        this.localization = localization;
     }
 
-    public ResponseEntity notFound(String key) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(key);
+    public ResponseEntity badRequest(String key) {
+        return ResponseEntity.badRequest().body(localization.getString(key));
     }
 
-    public <Body> ResponseEntity<Body> ok(Body body) {
-        return ResponseEntity.ok().body(body);
+    public <Body> ResponseEntity<Body> badRequestWithBody(Body body) {
+        return ResponseEntity.badRequest().body(body);
     }
 
-    public ResponseEntity okStatus(String key) {
-        return ResponseEntity.status(HttpStatus.OK).body(key);
+    public <Body> ResponseEntity<Body> okWithBody(Body body) {
+        return ResponseEntity.ok(body);
     }
 
-    public ResponseEntity badStatus(String key) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(key);
+    public ResponseEntity ok(String key) {
+        return ResponseEntity.ok(localization.getString(key));
     }
 }

@@ -1,86 +1,46 @@
 package com.electrolux.washmachine;
 
-import com.electrolux.washmachine.com.electrolux.washmachine.modes.Modes;
+import com.electrolux.washmachine.modes.Mode;
+import com.electrolux.washmachine.modes.ModeState;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ElectroluxWashingMachine {
 
-    private int countWashingCapsules;
-    private boolean powerOn;
-    private boolean doorClosed;
-    private Modes mode;
-    private int clothesWeight;
+    private Mode mode = Mode.INITIAL;
+    private ModeState state = ModeState.READY;
+    private boolean doorOpen = false;
+    private boolean powerOn = false;
 
-    public ElectroluxWashingMachine() {
+    public boolean isDoorOpen() {
+        return doorOpen;
     }
 
-    public int getCountWashingCapsules() {
-        return countWashingCapsules;
-    }
-
-    public synchronized void setCountWashingCapsules(int countWashingCapsules) {
-        this.countWashingCapsules += countWashingCapsules;
-    }
-
-    public boolean isDoorClosed() {
-        return doorClosed;
-    }
-
-    public synchronized void setDoorClosed(boolean doorClosed) {
-        this.doorClosed = doorClosed;
-    }
-
-    public Modes getMode() {
-        return mode;
-    }
-
-    public void setMode(Modes mode) {
-        this.mode = mode;
-    }
-
-
-    public int getClothesWeight() {
-        return clothesWeight;
-    }
-
-    public synchronized void setClothesWeight(int clothesWeight) {
-        this.clothesWeight = clothesWeight;
+    public void setDoorOpen(boolean doorOpen) {
+        this.doorOpen = doorOpen;
     }
 
     public boolean isPowerOn() {
         return powerOn;
     }
 
-    public synchronized void setPowerOn(boolean powerOn) {
+    public void setPowerOn(boolean powerOn) {
         this.powerOn = powerOn;
     }
 
-    public synchronized String run() {
-        if (!powerOn) {
-            return "Washing Machine is not switched on.";
-        }
-        if (!doorClosed) {
-            return "Door is open. Please, close the door.";
-        }
-        if (countWashingCapsules == 0) {
-            return "Not enough washing capsules. Please add some amount of capsules to start washing.";
-        }
-        if (mode == null) {
-            return "Mode is not selected. Please, select washing mode.";
-        }
-        if (clothesWeight > mode.getAllowedWeight()) {
-            return "Too much clothes weight for current mode. Please, take away some clothes.";
-        }
+    public Mode getMode() {
+        return mode;
+    }
 
-        try {
-            //To imitate washing process
-            Thread.sleep(mode.getTime());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return "Washing process interrupted.";
-        }
-        countWashingCapsules = 0;
-        return "Washing finished.";
+    public void setMode(Mode mode) {
+        this.mode = mode;
+    }
+
+    public ModeState getState() {
+        return state;
+    }
+
+    public void setState(ModeState state) {
+        this.state = state;
     }
 }

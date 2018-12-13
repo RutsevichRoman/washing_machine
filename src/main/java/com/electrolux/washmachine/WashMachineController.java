@@ -1,102 +1,111 @@
 package com.electrolux.washmachine;
 
-import com.electrolux.washmachine.com.electrolux.washmachine.modes.Modes;
-import com.electrolux.washmachine.request.RequestMode;
+import com.electrolux.washmachine.localization.Localization;
+import com.electrolux.washmachine.modes.Mode;
 import com.electrolux.washmachine.response.ResponseHelper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
-import java.util.List;
-
 @RestController
-@RequestMapping(value = "/api/washing_machine")
+@RequestMapping(value = "/api/v1")
 public class WashMachineController {
 
     private final ElectroluxWashingMachineService service;
     private final ResponseHelper responseHelper;
+    private final Localization localization;
 
-    public WashMachineController(ElectroluxWashingMachineService service, ResponseHelper responseHelper) {
+    public WashMachineController(ElectroluxWashingMachineService service, ResponseHelper responseHelper, Localization localization) {
         this.service = service;
         this.responseHelper = responseHelper;
+        this.localization = localization;
     }
 
     @GetMapping("/modes")
-    public List<Modes> getModes() {
-        return Arrays.asList(Modes.values());
+    public ResponseEntity getModes() {
+        return responseHelper.okWithBody(Mode.values());
     }
 
-    @GetMapping("/power")
-    public boolean power(@RequestParam(value = "value", defaultValue = "off") String value) {
-        if (value.equals("on")) {
-            return service.powerOn();
+    @PostMapping("/power")
+    public ResponseEntity power(@RequestBody boolean value) {
+        boolean result = service.setPowerOn(value);
+        if (result) {
+            if (value) {
+                return responseHelper.ok("power_is_on");
+            } else {
+                return responseHelper.ok("power_is_off");
+            }
         } else {
-            return service.powerOff();
+            if (value) {
+                return responseHelper.badRequest("power_can_not_be_switched_on");
+            } else {
+                return responseHelper.badRequest("power_can_not_be_switched_off");
+            }
         }
     }
 
-    @GetMapping("/door")
-    public boolean door(@RequestParam(value = "value", defaultValue = "opened") String value) {
-        if (value.equals("opened")) {
-            return service.doorOpened();
+    @GetMapping("/power/state")
+    public ResponseEntity powerState() {
+        if (service.isPowerOn()) {
+            return responseHelper.ok("power_is_on");
         } else {
-            return service.doorClosed();
+            return responseHelper.ok("power_is_off");
+        }
+    }
+
+    @PostMapping("/door")
+    public ResponseEntity door(@RequestBody boolean value) {
+        boolean result = service.setDoorOpen(value);
+        if (result) {
+            if (value) {
+                return responseHelper.ok("door_is_opened");
+            } else {
+                return responseHelper.ok("door_is_closed");
+            }
+        } else {
+            if (value) {
+                return responseHelper.badRequest("door_can_not_be_opened");
+            } else {
+                return responseHelper.badRequest("door_can_not_be_closed");
+            }
+        }
+    }
+
+    @GetMapping("/door/state")
+    public ResponseEntity doorState() {
+        if (service.isDoorOpen()) {
+            return responseHelper.ok("door_is_opened");
+        } else {
+            return responseHelper.ok("door_is_closed");
         }
     }
 
     @PostMapping("/mode")
-    public ResponseEntity selectMode(@RequestBody RequestMode mode) {
-        if (mode == null) {
-            return responseHelper.badStatus("Json body is not correct.");
+    public ResponseEntity mode(@RequestBody String mode) {
+        boolean result = service.setMode(mode);
+        if (result) {
+            return responseHelper.okWithBody(String.format(localization.getString("mode_is_set"), mode));
+        } else {
+            return responseHelper.badRequestWithBody(String.format(localization.getString("mode_can_not_be_set"), mode));
         }
-        final String modeName = mode.getModeName();
-        return service.setMode(modeName) ? responseHelper.okStatus(modeName + " mode is set.") : responseHelper.notFound("Mode Not Found.");
     }
 
-    @GetMapping("")
-    public ResponseEntity getWashingMachineState() {
-        return responseHelper.ok(service.getWashingMachine());
+    @GetMapping("/mode/current")
+    public ResponseEntity currentMode() {
+        return responseHelper.okWithBody(service.getCurrentMode().modeName);
     }
 
-    @GetMapping("/washing_capsules")
-    public ResponseEntity getWashingPowder() {
-        int countWashingCapsules = service.getWashingCapsules();
-        if (countWashingCapsules < 1) {
-            return responseHelper.notFound("There are no washing capsules in machine.");
-        }
-        return responseHelper.ok("Current amount of washing capsules =" + countWashingCapsules);
+    @GetMapping("/mode/state")
+    public ResponseEntity currentState() {
+        return responseHelper.okWithBody(service.getCurrentState().name());
     }
 
-    @GetMapping("/add_washing_capsules")
-    public ResponseEntity addWashingCapsules(@RequestParam(value = "value", defaultValue = "0") String value) {
-      Integer integer;
-        try {
-            integer = Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return responseHelper.badStatus("Amount of washing capsules must be integer value.");
-        }
-        service.setWashingCapsules(integer);
-        return responseHelper.okStatus("Total amount of capsules=" + service.getWashingCapsules());
-    }
-
-    @GetMapping("/run")
+    @PostMapping("/run")
     public ResponseEntity runWashingMachine() {
-        String message = service.runWashing();
-        if (message.equals("Success")) {
-            return responseHelper.ok(message);
+        boolean result = service.runWashingMode();
+        if (result) {
+            return responseHelper.okWithBody(String.format(localization.getString("mode_is_run"), service.getCurrentMode()));
+        } else {
+            return responseHelper.badRequestWithBody(String.format(localization.getString("mode_can_not_be_run"), service.getCurrentMode()));
         }
-        return responseHelper.notFound(message);
-    }
-
-    @GetMapping("/clothes_weight")
-    public ResponseEntity getClothesWeight() {
-        // Stub
-        return responseHelper.ok("ok");
-    }
-
-    @GetMapping("/add_clothes_weight")
-    public ResponseEntity loadClothesWeight(@RequestParam(value = "value", defaultValue = "0") String value) {
-        // Stub
-        return responseHelper.ok("ok");
     }
 }

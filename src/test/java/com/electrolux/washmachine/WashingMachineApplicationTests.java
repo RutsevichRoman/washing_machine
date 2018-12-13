@@ -1,46 +1,57 @@
 package com.electrolux.washmachine;
 
+import com.electrolux.washmachine.localization.Localization;
+import com.electrolux.washmachine.modes.Mode;
+import com.electrolux.washmachine.modes.ModeState;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.skyscreamer.jsonassert.JSONAssert;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = WashingMachineApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = WashingMachineApplication.class)
 public class WashingMachineApplicationTests {
 
-	@LocalServerPort
-	private int port;
+    @Autowired
+    private WashMachineController controller;
+    @Autowired
+    private Localization localization;
 
-	private final HttpHeaders headers = new HttpHeaders();
-	private final TestRestTemplate restTemplate = new TestRestTemplate();
+    @Test
+    public void testDoor() {
+        Assert.assertEquals(localization.getString("door_is_closed"), controller.doorState().getBody());
+        Assert.assertEquals(localization.getString("door_is_opened"), controller.door(true).getBody());
+        Assert.assertEquals(localization.getString("door_can_not_be_opened"), controller.door(true).getBody());
+        Assert.assertEquals(localization.getString("door_is_closed"), controller.door(false).getBody());
+        Assert.assertEquals(localization.getString("door_can_not_be_closed"), controller.door(false).getBody());
+        Assert.assertEquals(localization.getString("door_is_closed"), controller.doorState().getBody());
+    }
 
-	@Test
-	public void contextLoads() {
-	}
+    @Test
+    public void testPower() {
+        Assert.assertEquals(localization.getString("power_is_off"), controller.powerState().getBody());
+        Assert.assertEquals(localization.getString("power_is_on"), controller.power(true).getBody());
+        Assert.assertEquals(localization.getString("power_can_not_be_switched_on"), controller.power(true).getBody());
+        Assert.assertEquals(localization.getString("power_is_off"), controller.power(false).getBody());
+        Assert.assertEquals(localization.getString("power_can_not_be_switched_off"), controller.power(false).getBody());
+        Assert.assertEquals(localization.getString("power_is_off"), controller.powerState().getBody());
+    }
 
-	@Test
-	public void testExistingModesGetRequest() throws Exception {
-		HttpEntity<String> entity = new HttpEntity<>(null, headers);
+    @Test
+    public void testMode() {
+        Assert.assertEquals(Mode.INITIAL.modeName, controller.currentMode().getBody());
+        Assert.assertEquals(ModeState.READY.name(), controller.currentState().getBody());
+        Assert.assertEquals(String.format(localization.getString("mode_is_set"), Mode.SYNTHETICS.modeName), controller.mode(Mode.SYNTHETICS.modeName).getBody());
+        Assert.assertEquals(String.format(localization.getString("mode_can_not_be_set"), Mode.SYNTHETICS.modeName), controller.mode(Mode.SYNTHETICS.modeName).getBody());
+        Assert.assertEquals(String.format(localization.getString("mode_is_run"), Mode.SYNTHETICS.modeName), controller.runWashingMachine().getBody());
+        Assert.assertEquals(Mode.SYNTHETICS.modeName, controller.currentMode().getBody());
+        Assert.assertEquals(ModeState.READY.name(), controller.currentState().getBody());
 
-		ResponseEntity<String> response = restTemplate.exchange(
-				createURLWithPort("/api/washing_machine/modes"),
-				HttpMethod.GET, entity, String.class);
-
-		String expected = "[\"QUICK_WASHING_30\", \"SYNTHETICS\", \"COTTON_30\", \"COTTON_60\"]";
-
-		JSONAssert.assertEquals(expected, response.getBody(), false);
-	}
-
-	private String createURLWithPort(String uri) {
-		return "http://localhost:" + port + uri;
-	}
+        Assert.assertEquals(String.format(localization.getString("mode_is_set"), Mode.INITIAL.modeName), controller.mode(Mode.INITIAL.modeName).getBody());
+        Assert.assertEquals(Mode.INITIAL.modeName, controller.currentMode().getBody());
+        Assert.assertEquals(ModeState.READY.name(), controller.currentState().getBody());
+    }
 }
 

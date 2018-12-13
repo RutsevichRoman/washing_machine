@@ -1,67 +1,87 @@
 package com.electrolux.washmachine;
 
-import com.electrolux.washmachine.com.electrolux.washmachine.modes.Modes;
+import com.electrolux.washmachine.modes.Mode;
+import com.electrolux.washmachine.modes.ModeState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ElectroluxWashingMachineService {
 
+    private final Logger logger = LoggerFactory.getLogger(ElectroluxWashingMachineService.class);
     private final ElectroluxWashingMachine washingMachine;
 
+    @Autowired
     public ElectroluxWashingMachineService(ElectroluxWashingMachine washingMachine) {
         this.washingMachine = washingMachine;
     }
 
-    public boolean powerOn() {
-        washingMachine.setPowerOn(true);
+    public boolean isDoorOpen() {
+        return washingMachine.isDoorOpen();
+    }
+
+    public boolean setDoorOpen(boolean doorOpen) {
+        if (doorOpen == washingMachine.isDoorOpen()) {
+            return false;
+        }
+        washingMachine.setDoorOpen(doorOpen);
+        return true;
+    }
+
+    public boolean isPowerOn() {
         return washingMachine.isPowerOn();
     }
 
-    public boolean powerOff() {
-        washingMachine.setPowerOn(false);
-        return !washingMachine.isPowerOn();
+    public boolean setPowerOn(boolean powerOn) {
+        if (powerOn == washingMachine.isPowerOn()) {
+            return false;
+        }
+        washingMachine.setPowerOn(powerOn);
+        return true;
     }
 
-    public boolean doorOpened() {
-        washingMachine.setDoorClosed(false);
-        return !washingMachine.isDoorClosed();
+    public Mode getCurrentMode() {
+        return washingMachine.getMode();
     }
 
-    public boolean doorClosed() {
-        washingMachine.setDoorClosed(true);
-        return washingMachine.isDoorClosed();
+    public ModeState getCurrentState() {
+        return washingMachine.getState();
     }
 
     public boolean setMode(String modeName) {
-        Modes mode;
-        try {
-            mode = Modes.valueOf(modeName);
-        } catch (IllegalArgumentException e) {
+        Mode mode = Mode.fromName(modeName);
+        if (mode == null) {
             return false;
         }
-        washingMachine.setMode(mode);
-        return washingMachine.getMode().equals(mode);
-    }
-
-    public ElectroluxWashingMachine getWashingMachine() {
-        return washingMachine;
-    }
-
-    public int getWashingCapsules() {
-        return washingMachine.getCountWashingCapsules();
-    }
-
-    public boolean setWashingCapsules(int countWashingCapsules) {
-        int oldCountWashingCapsules = washingMachine.getCountWashingCapsules();
-        washingMachine.setCountWashingCapsules(countWashingCapsules);
-        if (washingMachine.getCountWashingCapsules() > oldCountWashingCapsules) {
+        if (washingMachine.getMode() == mode) {
+            return false;
+        }
+        if (washingMachine.getMode() == Mode.INITIAL || mode == Mode.INITIAL) {
+            washingMachine.setMode(mode);
+            washingMachine.setState(ModeState.READY);
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
-    public String runWashing() {
-        return washingMachine.run();
+    public boolean runWashingMode() {
+        if (washingMachine.getMode() == Mode.INITIAL) {
+            //Initial state can not be run
+            return false;
+        }
+        for (ModeState state : ModeState.values()) {
+            //Executing states
+            washingMachine.setState(state);
+            executingModeState(state);
+        }
+        // Set beginning state
+        washingMachine.setState(ModeState.READY);
+        return true;
+    }
+
+    private void executingModeState(ModeState modeState) {
+        logger.info(String.format("Washing mode started state - %s", modeState.name()));
     }
 }
