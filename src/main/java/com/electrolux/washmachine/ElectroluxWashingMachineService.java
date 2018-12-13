@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ElectroluxWashingMachineService {
 
+    private static final String WASHING_MODE_STARTED = "Washing mode started state - %s";
     private final Logger logger = LoggerFactory.getLogger(ElectroluxWashingMachineService.class);
     private final ElectroluxWashingMachine washingMachine;
 
@@ -82,6 +83,6 @@ public class ElectroluxWashingMachineService {
     }
 
     private void executingModeState(ModeState modeState) {
-        logger.info(String.format("Washing mode started state - %s", modeState.name()));
+        logger.info(String.format(WASHING_MODE_STARTED, modeState.name()));
     }
 }
